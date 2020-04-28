@@ -1,0 +1,45 @@
+use com.basiscomponents.rest.MultipartPost
+
+class public SMSGateway
+
+    field private BBjString username$
+    field private BBjString password$
+    field private BBjString url$
+    field public Boolean IgnoreCertErrors! = Boolean.FALSE
+    
+    method private SMSGateway()
+    methodend
+    
+    method public SMSGateway(BBjString username$, BBjString password$, BBjString address$)
+        #this!(username$, password$, address$, Boolean.TRUE)
+    methodend
+    
+    method public SMSGateway(BBjString username$, BBjString password$, BBjString address$, Boolean https!)
+        #username$=username$
+        #password$=password$
+        if https! then
+            url$="https://"
+        else
+            url$="http://"
+        endif
+        #url$=url$+address$+"/api.php"
+    methodend 
+
+    method public BBjString send(BBjString to$, BBjString text$)
+        methodret #send(to$,text$,"number")
+    methodend
+    
+    method public BBjString send(BBjString to$, BBjString text$, BBjString mode$)
+      client! = new MultipartPost(#url$, "ISO-8859-15",#IgnoreCertErrors!)
+      client!.addFormField("username",#username$)
+      client!.addFormField("password",#password$)
+      client!.addFormField("to",to$)
+      client!.addFormField("text",text$)
+      client!.addFormField("mode",mode$)
+      
+      methodret str(client!.finish())
+      
+    methodend
+    
+
+classend

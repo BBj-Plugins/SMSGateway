@@ -1,0 +1,90 @@
+use ::SMSGateway/SMSGateway.bbj::SMSGateway
+
+? 'hide'
+sg! = BBjAPI().openSysGui("X0")
+r=sg!.resOpen("SMSGateway/Demo/Demo.arc")
+wnd! = sg!.createTopLevelWindow(r,101)
+
+tc! = BBjAPI().getThinClient()
+cb_rememberpassword! = wnd!.getControl("rememberpassword")
+cb_ssl! = wnd!.getControl("ssl")
+cb_allcerts! = wnd!.getControl("accepallcerts")
+
+ed_password! = wnd!.getControl("password")
+ed_username! = wnd!.getControl("username")
+ed_address! = wnd!.getControl("address")
+to! = wnd!.getControl("to")
+message! = wnd!.getControl("message")
+service_number! = wnd!.getControl("service_number")
+btn_send! = wnd!.getControl("btnsend")
+
+wnd!.setCallback(BBjAPI.ON_CLOSE,"byebye")
+btn_send!.setCallback(BBjAPI.ON_BUTTON_PUSH,"send")
+
+gosub restoreSettings
+
+process_events
+
+
+byebye:
+    gosub saveSettings
+    bye
+    
+    
+saveSettings:
+    tc!.setUserProperty("smsgw.username",ed_username!.getText())
+    tc!.setUserProperty("smsgw.address",ed_address!.getText())
+    
+    if cb_rememberpassword!.isSelected() then
+        tc!.setUserProperty("smsgw.password",ed_password!.getText())
+        
+    else
+        tc!.setUserProperty("smsgw.password","")
+    fi
+    
+    tc!.setUserProperty("smsgw.ssl",str(cb_ssl!.isSelected()))
+    tc!.setUserProperty("smsgw.acceptallcerts",str(cb_allcerts!.isSelected()))
+return    
+
+restoreSettings:
+    ed_username!.setText(tc!.getUserProperty("smsgw.username",err=*next))
+    ed_address!.setText(tc!.getUserProperty("smsgw.address",err=*next))
+    tmp$=""
+    tmp$=tc!.getUserProperty("smsgw.password",err=*next)
+    if tmp$>"" then
+        ed_password!.setText(tmp$)
+        cb_rememberpassword!.setSelected(1)
+    endif
+
+    cb_ssl!.setSelected(num(tc!.getUserProperty("smsgw.ssl",err=*next),err=*next))
+    cb_allcerts!.setSelected(num(tc!.getUserProperty("smsgw.acceptallcerts",err=*next),err=*next))
+return
+
+send:
+    
+    ssl         = cb_ssl!.isSelected()
+    allcerts    = cb_allcerts!.isSelected()
+    
+    pw$         = ed_password!.getText()
+    username$   = ed_username!.getText()
+    address$    = ed_address!.getText()
+    to$         = to!.getText()
+    message$    = message!.getText()
+    if service_number!.isSelected() then
+        service$ ="number"
+    else
+        service$ ="number"
+        rem other services later
+    endif
+
+
+    rem todo: validation of all inputs
+
+    gw! = new SMSGateway(username$,pw$,address$,ssl)
+    if allcerts then
+        gw!.setIgnoreCertErrors(1)
+    endif 
+    result$ = gw!.send(to$,message$)
+    a=msgbox(result$,0,"SMS sent")
+
+return
