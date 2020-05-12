@@ -61,7 +61,6 @@ BEGIN
 
     RADIOBUTTON 202, "Telegram", 142, 384, 90, 25
     BEGIN
-        DISABLED
         NAME "service_telegram"
     END
 
@@ -73,7 +72,6 @@ BEGIN
 
     RADIOBUTTON 204, "Auto", 372, 384, 90, 25
     BEGIN
-        DISABLED
         NAME "service_auto"
     END
 

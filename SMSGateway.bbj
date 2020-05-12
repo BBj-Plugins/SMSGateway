@@ -30,15 +30,36 @@ class public SMSGateway
     methodend
     
     method public BBjString send(BBjString to$, BBjString text$, BBjString mode$)
+      seterr catch_err
       client! = new MultipartPost(#url$, "ISO-8859-15",#IgnoreCertErrors!)
       client!.addFormField("username",#username$)
       client!.addFormField("password",#password$)
       client!.addFormField("to",to$)
       client!.addFormField("text",text$)
-      client!.addFormField("mode",mode$)
+          
+      if mode$="number"
+         client!.addFormField("mode",mode$)
+      fi
+      if mode$="telegram"
+         client!.addFormField("mode","telnumber")
+         client!.addFormField("telauto","false")
+      fi
       
-      methodret str(client!.finish())
+      if mode$="auto"
+         client!.addFormField("mode","telnumber")
+         client!.addFormField("telauto","true")
+      fi      
+            
+      resp! = client!.finish()
+      rem this is for an oddity in their interface
+      rem when SMS sending is stopped their API returns "OK: [Array]"
+      if pos("Array"=STR(resp!))>0  then
+            methodret "Error: SMS sending might be suspended"
+      endif 
+      methodret str(resp!)
       
+      catch_err:
+      methodret "Error: "+errmes(-1)
     methodend
     
 

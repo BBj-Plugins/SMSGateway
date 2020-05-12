@@ -16,6 +16,8 @@ ed_address! = wnd!.getControl("address")
 to! = wnd!.getControl("to")
 message! = wnd!.getControl("message")
 service_number! = wnd!.getControl("service_number")
+service_telegram! = wnd!.getControl("service_telegram")
+service_auto! = wnd!.getControl("service_auto")
 btn_send! = wnd!.getControl("btnsend")
 
 wnd!.setCallback(BBjAPI.ON_CLOSE,"byebye")
@@ -73,7 +75,12 @@ send:
     if service_number!.isSelected() then
         service$ ="number"
     else
-        service$ ="number"
+        if service_telegram!.isSelected() then
+            service$ ="telegram"
+        else
+            if service_auto!.isSelected() then
+                service$ ="auto"
+            fi
         rem other services later
     endif
 
@@ -84,7 +91,7 @@ send:
     if allcerts then
         gw!.setIgnoreCertErrors(1)
     endif 
-    result$ = gw!.send(to$,message$)
+    result$ = gw!.send(to$,message$,service$)
     a=msgbox(result$,0,"SMS sent")
 
 return
