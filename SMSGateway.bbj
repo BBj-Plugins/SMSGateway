@@ -5,15 +5,34 @@ class public SMSGateway
     field private BBjString username$
     field private BBjString password$
     field private BBjString url$
+    
+    rem /**
+    rem  * ignore invalid SSL certificates
+    rem  */
     field public Boolean IgnoreCertErrors! = Boolean.FALSE
     
     method private SMSGateway()
     methodend
     
+    rem /**
+    rem  * public constructor
+    rem  * username: the username (has to be enabled for API usage)
+    rem  * password: the secret
+    rem  * address: the IP address or network name of the SMS Gateway
+    rem  */
     method public SMSGateway(BBjString username$, BBjString password$, BBjString address$)
         #this!(username$, password$, address$, Boolean.TRUE)
     methodend
     
+    rem /**
+    rem  * public constructor
+    rem  * username: the username (has to be enabled for API usage)
+    rem  * password: the secret
+    rem  * address: the IP address or network name of the SMS Gateway
+    rem  * https: set to true to enforce a secure SSL https
+    rem  * 
+    rem  * remark: you can setIgnoreCertErrors(Boolean.TRUE) to accept invalid / self signed certs 
+    rem  */
     method public SMSGateway(BBjString username$, BBjString password$, BBjString address$, Boolean https!)
         #username$=username$
         #password$=password$
@@ -25,10 +44,25 @@ class public SMSGateway
         #url$=url$+address$+"/api.php"
     methodend 
 
+    rem /**
+    rem  * send a message by SMS
+    rem  * to: the recipient's cell number
+    rem  * text: the text message to send
+    rem  */
     method public BBjString send(BBjString to$, BBjString text$)
         methodret #send(to$,text$,"number")
     methodend
     
+    rem /**
+    rem  * send a message
+    rem  * to: the recipient's cell number
+    rem  * text: the text message to send
+    rem  * mode: sending mode, currently supports 
+    rem  * "number" for SMS
+    rem  * "telegram" for Telegram 
+    rem  * "auto" to first try Telegram then fall back to SMS
+    rem  * 
+    rem  */
     method public BBjString send(BBjString to$, BBjString text$, BBjString mode$)
       seterr catch_err
       client! = new MultipartPost(#url$, "ISO-8859-15",#IgnoreCertErrors!)
