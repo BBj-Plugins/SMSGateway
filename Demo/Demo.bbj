@@ -81,6 +81,7 @@ send:
             if service_auto!.isSelected() then
                 service$ ="auto"
             fi
+        fi
         rem other services later
     endif
 
