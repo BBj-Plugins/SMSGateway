@@ -65,7 +65,7 @@
 <!-- ========= END OF TOP NAVBAR ========= -->
 <div class="header">
 <h1 class="title">How This API Document Is Organized</h1>
-<div class="subTitle">This API (Application Programming Interface) document has features which are designed for the needs of BASIS.</div>
+<div class="subTitle">This API document has features which are designed for the needs of BASIS.</div>
 </div>
 <div class="contentContainer">
 <ul class="blockList">
@@ -84,13 +84,18 @@ License: <a href=https://github.com/atlassian/commonmark-java/blob/master/LICENS
 <ul>
 	<li> <b>author</b>: This option shows the @author tag in the documention.</li>
 	<li> <b>bottom 'text'</b>: If this string is set, a new line is created on each bottom line of the documentation with the content of the given 'text'.</li>
-	<li> <b>docPrivate</b>: This option commands the documentation to document everything marked as public, protected and private.</li>
-	<li> <b>docProdected</b>: This option commands the documentation to document everything marked as public and protected.</li>
+	<li> [deprecated]<b>docPrivate</b>: This option commands the documentation to document everything marked as public, protected and private.</li>
+	<li> [deprecated]<b>docProdected</b>: This option commands the documentation to document everything marked as public and protected.</li>
 	<li> <b>doctitle 'title'</b>: If this string is set, the heading of the overview-summary file of the documentation will set to the given 'title'.</li>
+	<li> <b>docVisibility</b>: With this option an enum can be set (BBjDocsParameters.Visibility). </li>
+	<li>&nbsp;		Setting PROTECTED and the BBjDocsGenerator will document public and protected structures.</li>
+	<li>&nbsp;		Setting PRIVATE and the BBjDocsGenerator will document public, protected and private structures.</li>
+	<li>&nbsp;			Without setting anything the BBjDocsGenerator will only document public structures.</li>
 	<li> <b>logPath</b>: The logs which are generated during creation of the documentation are saved at this path.</li>
+	<li> -------->Default logpath is the default tmp directory in the OS<--------	</li>
+	<li> <b>newlines</b>: This parameter converts "\n" to "< br >" tags unless they are following any html tags. </li>
 	<li> <b>noDeprecatedList</b>: The resulting documentation won't contain a deprecated list.</li>
 	<li> <b>noIndex</b>: The resulting documentation won't contain a index file.</li>
-	<li> <b>noNavbar</b>: The documentation will be generated without a navbar.</li>
 	<li> <b>noSince</b>: This option hides the @since tag in the documention.</li>
 	<li> <b>noTree</b>: The resulting documentation won't contain a tree overview.</li>
 	<li> <b>noTimestamp</b>: This option hides the timestamp which is written in a hidden html comment on the beginning of each site of the documention.</li>
@@ -98,41 +103,82 @@ License: <a href=https://github.com/atlassian/commonmark-java/blob/master/LICENS
 	<li> <b>top 'text'</b>: If this string is set, a new line is created on each top line of the documentation with the content of the given 'text'.</li>
 	<li> <b>verbose</b>: The messages of the logger are shown.</li>
 	<li> <b>version</b>: This option shows the @version tag in the documention.</li>
+	<br>
+	<b>Custom Placeholders and Templates</b>
+	
+	<p>Custom Templates and placeholders can be added to the documentation using the parameter class, which contains the parameter options above.<br>
+	Setting a new template:<br>
+	BBjDocsParameters.setClassTemplate(String filepathToTheTemplate)<br>
+	BBjDocsParameters.setTreeTemplate(String filepathToTheTemplate)<br>
+	...
+	<p>
+	
+	<p>
+	Setting a new placeholder for class and use files:<br>
+	BBjDocsParameters.setClassPlaceHolder(String filePath, HashMap<String, String> replacementMap)<br>
+	BBjDocsParameters.setUsePlaceHolder(String filePath, HashMap<String, String> replacementMap)<br>
+	<p>
+	
+	<p>
+	Explanation: <br>
+	The filepath parameter has to be the original filepath of the BBj Source file the documentation page OR the use page is based on.<br>
+	The replacement map contains the placeholders as keys and the replacements as values.<br>
+	<p>
+	
+	<p>
+	Setting a new placeholder for other pages of the documentation:<br>
+	BBjDocsParameters.setTreePlaceHolder(String placeHolder, String replacement) <br>
+	<p>
 </ul>
 </li>
 <li class="blockList">
-<h2>Navigation Bar<h2>
-<div>This API (Application Programming Interface) document has pages corresponding to the items in the navigation bar, described as follows.</div>
+<h2>Packages</h2>
+<p>It is possible to define packages in bbj, which are documented by this tool:</p>
+<p>
+rem /**  <br>
+rem * Javadoc comments  <br>
+rem */  <br>
+rem package main<br>
+<br>
+<br>
+rem /**  <br>
+rem * Javadoc comments  <br>
+rem */  <br>
+rem package main.first <br>
+<br>
+
+<br>
+rem /**  <br>
+rem * Javadoc comments  <br>
+rem */  <br>
+rem package main.second<br>
+<br>
+
+Defining these packages at the tops of different BBj Source Files will result in the following folder structure, creating the main folder<br>
+in the savepath folder with the other additional files like overviews:<br>
+<br>
+main  <br>
++-- first  <br>
++-- second  <br>
+</p>
+<p>If packages have been defined, each package has a page that contains a list of its classes and interfaces, with a summary for each.</p>
+</li>
+<li class="blockList">
+<h2>Navigation Bar</h2>
+<p>This API document has pages corresponding to the items in the navigation bar, described as follows.</p>
 </li>
 <li class="blockList">
 <h2>Overview</h2>
 <p>The <a href="overview-summary.html">Overview</a> page is the front page of this API document and provides a list of all packages with a summary for each.  This page can also contain an overall description of the set of packages.</p>
 </li>
-<li class="blockList">
-<h2>Package</h2>
-<p>Each package has a page that contains a list of its classes and interfaces, with a summary for each. This page can contain six categories:</p>
-<ul>
-<li>Interfaces (italic)</li>
-<li>Classes</li>
-<li>Enums</li>
-<li>Exceptions</li>
-<li>Errors</li>
-<li>Annotation Types</li>
-</ul>
-</li>
-<li class="blockList">
 <h2>Class/Interface</h2>
 <p>Each bbj class, interface, nested class and nested interface has its own separate page. Each of these pages has three sections consisting of a class/interface description, summary tables, and detailed member descriptions:</p>
 <ul>
 <li>Class inheritance diagram</li>
-<li>Direct Subclasses</li>
-<li>All Known Subinterfaces</li>
-<li>All Known Implementing Classes</li>
 <li>Class/interface declaration</li>
 <li>Class/interface description</li>
 </ul>
 <ul>
-<li>Nested Class Summary</li>
 <li>Field Summary</li>
 <li>Constructor Summary</li>
 <li>Method Summary</li>
@@ -142,30 +188,15 @@ License: <a href=https://github.com/atlassian/commonmark-java/blob/master/LICENS
 <li>Constructor Detail</li>
 <li>Method Detail</li>
 </ul>
-<p>Each summary entry contains the first sentence from the detailed description for that item. The summary entries are alphabetical, while the detailed descriptions are in the order they appear in the source code. This preserves the logical groupings established by the programmer.</p>
-</li>
-<li class="blockList">
-<h2>Annotation Type</h2>
-<p>Each annotation type has its own separate page with the following sections:</p>
-<ul>
-<li>Annotation Type declaration</li>
-<li>Annotation Type description</li>
-<li>Required Element Summary</li>
-<li>Optional Element Summary</li>
-<li>Element Detail</li>
-</ul>
+<p>Each summary entry contains the first sentence from the detailed description for that item. The summary entries are alphabetical.</p>
 </li>
 <li class="blockList">
 <h2>Use</h2>
-<p>Each documented package, class and interface has its own Use page.  This page describes what packages, classes, methods, constructors and fields use any part of the given class or package. Given a class or interface A, its Use page includes subclasses of A, fields declared as A, methods that return A, and methods and constructors with parameters of type A.  You can access this page by first going to the package, class or interface, then clicking on the "Use" link in the navigation bar.</p>
+<p>Each documented class and interface has its own Use page.  This page describes what classes, methods, constructors and fields use any part of the given class or package. Given a class or interface A, its Use page includes fields declared as A, methods that return A, and methods and constructors with parameters of type A. You can access this page by first going to the package, class or interface, then clicking on the "Use" link in the navigation bar.</p>
 </li>
 <li class="blockList">
 <h2>Tree (Class Hierarchy)</h2>
-<p>There is a <a href="overview-tree.html">Class Hierarchy</a> page for all packages, plus a hierarchy for each package. Each hierarchy page contains a list of classes and a list of interfaces. The classes are organized by inheritance structure starting with <code>java.lang.Object</code>. The interfaces do not inherit from <code>java.lang.Object</code>.</p>
-<ul>
-<li>When viewing the Overview page, clicking on "Tree" displays the hierarchy for all packages.</li>
-<li>When viewing a particular package, class or interface page, clicking "Tree" displays the hierarchy for only that package.</li>
-</ul>
+<p>There is a <a href="overview-tree.html">Class Hierarchy</a> page for the whole project. The hierarchy page contains a list of classes and a list of interfaces. The classes are organized by inheritance structure starting with the highest upperclass the tool can find.</code>.</p>
 </li>
 <li class="blockList">
 <h2>Deprecated API</h2>
@@ -185,7 +216,7 @@ License: <a href=https://github.com/atlassian/commonmark-java/blob/master/LICENS
 </li>
 <li class="blockList">
 <h2>All Classes</h2>
-<p>The <a href="allclasses.html">All Classes</a> link shows all classes and interfaces except non-static nested types.</p>
+<p>The <a href="allclasses.html">All Classes</a> link shows all classes and interfaces.</p>
 </li>
 </ul>
 </div>
@@ -202,7 +233,7 @@ License: <a href=https://github.com/atlassian/commonmark-java/blob/master/LICENS
 <li>Use</li>
 <li><a href="overview-tree.html">Tree</a></li>
 <li><a href="deprecated-list.html">Deprecated</a></li>
-<li><a href="index-files/index-1.html">Index</a></li>
+<li><a href="indexAll.html">Index</a></li>
 <li class="navBarCell1Rev">Help</li>
 </ul>
 <div class="aboutLanguage"><em><strong>Java&trade;&nbsp;Platform<br>Standard&nbsp;Ed.&nbsp;7</strong></em></div>
@@ -213,8 +244,8 @@ License: <a href=https://github.com/atlassian/commonmark-java/blob/master/LICENS
 <li>Next</li>
 </ul>
 <ul class="navList">
-<li><a href="index.html?help-doc.html" target="_top">Frames</a></li>
-<li><a href="help-doc.html" target="_top">No Frames</a></li>
+<li><a href="index.html?help.html" target="_top">Frames</a></li>
+<li><a href="help.html" target="_top">No Frames</a></li>
 </ul>
 <ul class="navList" id="allclasses_navbar_bottom">
 <li><a href="allclasses-noframe.html">All Classes</a></li>
