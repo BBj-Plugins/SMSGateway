@@ -74,12 +74,7 @@ BEGIN
     BEGIN
         NAME "service_auto"
     END
-
-    CHECKBOX 111, "Use SSL", 401, 42, 145, 25
-    BEGIN
-        NAME "ssl"
-    END
-
+    
     CHECKBOX 112, "Accept any Certificate", 401, 82, 156, 25
     BEGIN
         NAME "accepallcerts"

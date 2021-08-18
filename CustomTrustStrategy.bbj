@@ -1,0 +1,10 @@
+use java.security.cert.X509Certificate
+use org.apache.http.conn.ssl.TrustStrategy
+
+class public CustomTrustStrategy implements TrustStrategy
+    
+    method public boolean isTrusted (X509Certificate[] chain!, String authType!)
+        methodret Boolean.TRUE
+    methodend
+
+classend

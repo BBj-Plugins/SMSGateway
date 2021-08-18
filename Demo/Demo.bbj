@@ -7,7 +7,6 @@ wnd! = sg!.createTopLevelWindow(r,101)
 
 tc! = BBjAPI().getThinClient()
 cb_rememberpassword! = wnd!.getControl("rememberpassword")
-cb_ssl! = wnd!.getControl("ssl")
 cb_allcerts! = wnd!.getControl("accepallcerts")
 
 ed_password! = wnd!.getControl("password")
@@ -17,7 +16,6 @@ to! = wnd!.getControl("to")
 message! = wnd!.getControl("message")
 service_number! = wnd!.getControl("service_number")
 service_telegram! = wnd!.getControl("service_telegram")
-service_auto! = wnd!.getControl("service_auto")
 btn_send! = wnd!.getControl("btnsend")
 
 wnd!.setCallback(BBjAPI.ON_CLOSE,"byebye")
@@ -44,7 +42,6 @@ saveSettings:
         tc!.setUserProperty("smsgw.password","")
     fi
     
-    tc!.setUserProperty("smsgw.ssl",str(cb_ssl!.isSelected()))
     tc!.setUserProperty("smsgw.acceptallcerts",str(cb_allcerts!.isSelected()))
 return    
 
@@ -57,41 +54,34 @@ restoreSettings:
         ed_password!.setText(tmp$)
         cb_rememberpassword!.setSelected(1)
     endif
-
-    cb_ssl!.setSelected(num(tc!.getUserProperty("smsgw.ssl",err=*next),err=*next))
+    
     cb_allcerts!.setSelected(num(tc!.getUserProperty("smsgw.acceptallcerts",err=*next),err=*next))
 return
 
 send:
-    
-    ssl         = cb_ssl!.isSelected()
     allcerts    = cb_allcerts!.isSelected()
-    
     pw$         = ed_password!.getText()
     username$   = ed_username!.getText()
     address$    = ed_address!.getText()
     to$         = to!.getText()
     message$    = message!.getText()
     if service_number!.isSelected() then
-        service$ ="number"
+        service$ ="sms"
     else
         if service_telegram!.isSelected() then
             service$ ="telegram"
-        else
-            if service_auto!.isSelected() then
-                service$ ="auto"
-            fi
         fi
         rem other services later
     endif
 
-
     rem todo: validation of all inputs
 
-    gw! = new SMSGateway(username$,pw$,address$,ssl)
-    if allcerts then
-        gw!.setIgnoreCertErrors(1)
-    endif 
+    ok=0; gw! = new SMSGateway(username$,pw$,address$,allcerts,  err=*next); ok=1
+    if !ok then
+        a = msgbox(errmes(-1))
+        return
+    endif
+    
     result$ = gw!.send(to$,message$,service$)
     a=msgbox(result$,0,"SMS sent")
 

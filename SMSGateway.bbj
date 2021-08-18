@@ -1,100 +1,218 @@
 use com.basiscomponents.rest.MultipartPost
 
+use org.apache.http.client.methods.HttpPost
+
+use org.apache.http.HttpResponse
+use org.apache.http.client.HttpClient
+use org.apache.http.impl.client.HttpClientBuilder
+
+use org.apache.http.client.utils.URIBuilder
+
+use org.apache.http.client.entity.EntityBuilder
+use org.apache.http.HttpEntity
+
+use com.google.gson.JsonArray
+use com.google.gson.JsonObject
+use com.google.gson.JsonParser
+
+use java.io.ByteArrayOutputStream
+
+use org.apache.http.ssl.SSLContextBuilder
+use org.apache.http.conn.ssl.NoopHostnameVerifier
+use org.apache.http.conn.ssl.SSLConnectionSocketFactory
+
+use ::SMSGateway/CustomTrustStrategy.bbj::CustomTrustStrategy
+
+use java.security.cert.X509Certificate
+use org.apache.http.conn.ssl.TrustStrategy
+
 class public SMSGateway
 
-    field private BBjString username$
-    field private BBjString password$
-    field private BBjString url$
+    rem the JWT Access Token
+    field private String jwt! 
     
-    rem /**
-    rem  * ignore invalid SSL certificates
-    rem  */
-    field public Boolean IgnoreCertErrors! = Boolean.FALSE
+    rem the gateway's address / IP
+    field private BBjString address$
+    
+    field private Boolean ignoreCertErrors! = Boolean.FALSE
     
     method private SMSGateway()
     methodend
     
     rem /**
-    rem  * public constructor
-    rem  * username: the username (has to be enabled for API usage)
-    rem  * password: the secret
-    rem  * address: the IP address or network name of the SMS Gateway
+    rem  * Instantiates the SMSGateway object and immediately performs the authentication to get the JWT access token 
+    rem  * 
+    rem  * @param username$ The username to access the gateway's API (has to be enabled for API usage)
+    rem  * @param password$ The pasword for authentication
+    rem  * @param address$  The gateway's IP address or network name 
     rem  */
     method public SMSGateway(BBjString username$, BBjString password$, BBjString address$)
-        #this!(username$, password$, address$, Boolean.TRUE)
+        #this!(username$, password$, address$, Boolean.FALSE)
     methodend
     
     rem /**
-    rem  * public constructor
-    rem  * username: the username (has to be enabled for API usage)
-    rem  * password: the secret
-    rem  * address: the IP address or network name of the SMS Gateway
-    rem  * https: set to true to enforce a secure SSL https
+    rem  * Instantiates the SMSGateway object and immediately performs the authentication to get the JWT access token 
     rem  * 
-    rem  * remark: you can setIgnoreCertErrors(Boolean.TRUE) to accept invalid / self signed certs 
+    rem  * @param username$ The username to access the gateway's API (has to be enabled for API usage)
+    rem  * @param password$ The pasword for authentication
+    rem  * @param address$  The gateway's IP address or network name 
+    rem  * @param ignoreCertErrors! If true, ignores all errors related to the gateway's SSL certificate beeing invalid 
     rem  */
-    method public SMSGateway(BBjString username$, BBjString password$, BBjString address$, Boolean https!)
-        #username$=username$
-        #password$=password$
-        if https! then
-            url$="https://"
-        else
-            url$="http://"
-        endif
-        #url$=url$+address$+"/api.php"
-    methodend 
+    method public SMSGateway(BBjString username$, BBjString password$, BBjString address$, Boolean ignoreCertErrors!)
+        #address$ = address$
+        #ignoreCertErrors! = ignoreCertErrors!
+        
+        seterr SMSGateway_error_handler
+    
+        declare HttpClient client!
+        client! = #getHttpClient()
+        
+        declare URIBuilder uriBuilder!
+        uriBuilder! = new URIBuilder()
+        uriBuilder!.setScheme("https").setHost(address$).setPath("/api/signin")
 
+        declare HttpPost request!
+        request! = new HttpPost(uriBuilder!.build())
+        request!.setHeader("Content-Type", "application/json")
+        request!.setHeader("Accept", "application/json")
+        
+        declare JsonObject payload!
+        payload! = new JsonObject()
+        payload!.addProperty("username", username$)
+        payload!.addProperty("password", password$)
+        
+        entity! = EntityBuilder.create().setText(payload!.toString()).build()
+        request!.setEntity(entity!)
+
+        declare HttpResponse response!
+        response! = client!.execute(request!)
+        responseString! = #getResultAsString(response!)
+        
+        declare JsonObject responseObject!
+        declare JsonParser parser!
+        parser! = new JsonParser()
+        responseObject! = parser!.parse(responseString!).getAsJsonObject()
+        
+        #jwt! = responseObject!.get("jwt").getAsString()
+        
+        methodret
+        
+        SMSGateway_error_handler:
+            throw "Authentication Failure: Failed to obtain a valid JWT Token from the gateway. Error Message: " + errmes(-1) , 300
+    methodend 
+    
     rem /**
-    rem  * send a message by SMS
-    rem  * to: the recipient's cell number
-    rem  * text: the text message to send
+    rem  * Sends a SMS message via the gayteway.
+    rem  *  
+    rem  * @param to$ The recipient phone number's
+    rem  * @param text$ The SMS text
     rem  */
     method public BBjString send(BBjString to$, BBjString text$)
-        methodret #send(to$,text$,"number")
+        methodret #send(to$,text$,"sms")
     methodend
     
     rem /**
-    rem  * send a message
-    rem  * to: the recipient's cell number
-    rem  * text: the text message to send
-    rem  * mode: sending mode, currently supports 
-    rem  * "number" for SMS
-    rem  * "telegram" for Telegram 
-    rem  * "auto" to first try Telegram then fall back to SMS
+    rem  * Sends a SMS/telegram message via the gayteway.
+    rem  *  
+    rem  * @param to$ The recipient phone number's
+    rem  * @param text$ The SMS text
+    rem  * @param mode$ Either "sms" or "telegram" 
     rem  * 
+    rem  * @return the gateway's JSON response 
     rem  */
     method public BBjString send(BBjString to$, BBjString text$, BBjString mode$)
-      seterr catch_err
-      client! = new MultipartPost(#url$, "ISO-8859-15",#IgnoreCertErrors!)
-      client!.addFormField("username",#username$)
-      client!.addFormField("password",#password$)
-      client!.addFormField("to",to$)
-      client!.addFormField("text",text$)
-          
-      if mode$="number"
-         client!.addFormField("mode",mode$)
-      fi
-      if mode$="telegram"
-         client!.addFormField("mode","telnumber")
-         client!.addFormField("telauto","false")
-      fi
-      
-      if mode$="auto"
-         client!.addFormField("mode","telnumber")
-         client!.addFormField("telauto","true")
-      fi      
-            
-      resp! = client!.finish()
-      rem this is for an oddity in their interface
-      rem when SMS sending is stopped their API returns "OK: [Array]"
-      if pos("Array"=STR(resp!))>0  then
-            methodret "Error: SMS sending might be suspended"
-      endif 
-      methodret str(resp!)
-      
-      catch_err:
-      methodret "Error: "+errmes(-1)
+        seterr send_error_handler
+    
+        declare HttpPost request!
+        declare HttpResponse response!
+        declare HttpClient client!
+
+        client! = #getHttpClient()
+        
+        declare URIBuilder uriBuilder!
+        uriBuilder! = new URIBuilder()
+        uriBuilder!.setScheme("https").setHost(#address$).setPath("/api/messages")
+        
+        request! = new HttpPost(uriBuilder!.build())
+        request!.setHeader("Content-Type", "application/json")
+        request!.setHeader("Accept", "application/json")
+        request!.setHeader("Authorization", "Bearer " + #jwt!)
+        
+        declare JsonObject recipient!
+        declare JsonArray recipientArray!
+
+        declare JsonObject body!
+        body! = new JsonObject()
+        
+        recipientArray! = new JsonArray()
+        recipient! = new JsonObject()
+        recipient!.addProperty("to",to$)
+        recipient!.addProperty("target","number")
+        recipientArray!.add(recipient!)
+        body!.add("recipients", recipientArray!)
+        
+        if mode$ <> "sms" AND mode$ <> "telegram" then
+            throw "Invalid send mode. Only 'sms' and 'telegram' are valid", 300
+        endif
+       
+        body!.addProperty("text", text$)
+        body!.addProperty("provider", mode$)
+        body!.addProperty("type","default")
+        
+        entity! = EntityBuilder.create().setText(body!.toString()).build()
+        request!.setEntity(entity!)
+
+        response! = client!.execute(request!)
+        responseString! = #getResultAsString(response!)
+         
+        methodret responseString!
+        
+        send_error_handler:
+            methodret "Error " + errmes(-1) 
     methodend
     
+    method private HttpClient getHttpClient()
+        declare HttpClientBuilder builder!
+        declare HttpPost request!
+        declare HttpResponse response!
+        declare HttpClient client!
+
+        builder! = HttpClientBuilder.create()
+        builder!.useSystemProperties()
+        
+        if #ignoreCertErrors! then
+            declare SSLContextBuilder sslContextBuilder!
+            sslContextBuilder! = new SSLContextBuilder()
+            sslContextBuilder!.loadTrustMaterial(null(), new CustomTrustStrategy())
+
+            declare SSLConnectionSocketFactory socketFactory!
+            socketFactory! = new SSLConnectionSocketFactory(sslContextBuilder!.build(), null(), null(), new NoopHostnameVerifier())
+            builder!.setSSLSocketFactory(socketFactory!)
+        endif
+    
+        methodret builder!.build()
+    methodend
+    
+    rem /**
+    rem  * Returns the result as String.
+    rem  */
+    method private String getResultAsString(HttpResponse response!)
+        declare byte[] bytes!
+        declare ByteArrayOutputStream outputStream!
+        
+        outputStream! = new ByteArrayOutputStream()
+        bytes! = new byte[1024]
+        inputStream! = response!.getEntity().getContent()
+        while 1
+            length = inputStream!.read(bytes!, err=*break)
+            if length = -1 then
+                break
+            endif
+            
+            outputStream!.write(bytes!, 0, length)
+        wend
+        
+        methodret outputStream!.toString()
+    methodend
 
 classend
